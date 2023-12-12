@@ -1,0 +1,5 @@
+﻿@VirtuDemo.Api_HostAddress = https://localhost:44334/api
+
+POST {{VirtuDemo.Api_HostAddress}}/blobstorage/upload
+
+###
