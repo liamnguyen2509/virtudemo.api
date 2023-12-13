@@ -1,5 +1,5 @@
 using Azure.Storage.Blobs;
-using Microsoft.AspNetCore.Http.Features;
+using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Mvc;
 
 # region builder settings
@@ -7,10 +7,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
-builder.Services.Configure<FormOptions>(options =>
-{
-    options.MultipartBodyLengthLimit = long.MaxValue;
-});
 #endregion
 
 #region AppSettings
@@ -37,6 +33,28 @@ app.UseCors(builder => builder
  .AllowAnyHeader()
 );
 #endregion
+
+app.MapGet("/api/getsaslink", async (string fileName, BlobServiceClient blobServiceClient, HttpContext httpContext) =>
+{
+    var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+    var blobClient = containerClient.GetBlobClient(fileName);
+
+    BlobSasBuilder sasBuilder = new BlobSasBuilder
+    {
+        BlobContainerName = containerName,
+        BlobName = fileName,
+        Resource = "b",
+        StartsOn = DateTimeOffset.UtcNow,
+        ExpiresOn = DateTimeOffset.UtcNow.AddHours(1), // Set expiry time
+    };
+
+    sasBuilder.SetPermissions(BlobSasPermissions.Write); // Set the permissions for the SAS
+
+    Uri blobUri = blobClient.GenerateSasUri(sasBuilder);
+
+    httpContext.Response.StatusCode = StatusCodes.Status200OK;
+    await httpContext.Response.WriteAsJsonAsync(blobUri.ToString());
+});
 
 app.MapPost("/api/blobstorage/upload", async ([FromForm] IFormFile formFile, BlobServiceClient blobServiceClient, HttpContext httpContext) =>
 {
