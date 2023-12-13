@@ -34,6 +34,8 @@ app.UseCors(builder => builder
 );
 #endregion
 
+app.MapGet("/", () => "Hello World!");
+
 app.MapGet("/api/getsaslink", async (string fileName, BlobServiceClient blobServiceClient, HttpContext httpContext) =>
 {
     var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
